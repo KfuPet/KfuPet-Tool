@@ -67,6 +67,11 @@
                         </Ellipse.Style>
                     </Ellipse>
                     <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#666"/>
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,2"/>
+                    <CheckBox Content="调试线框" IsChecked="{Binding IsDebugSkeleton}" 
+                              IsEnabled="{Binding IsConnected}"
+                              VerticalAlignment="Center" Margin="5,0"
+                              Checked="DebugSkeleton_Changed" Unchecked="DebugSkeleton_Changed"/>
                 </StackPanel>
             </Grid>
         </Border>

@@ -307,6 +307,16 @@ namespace KfuPet.Ipc.Client
             return CallSkeletonBoolAsync("DeleteResource", new { resourcePath }).GetAwaiter().GetResult();
         }
 
+        public void SetDebugSkeleton(bool show)
+        {
+            CallSkeletonBoolAsync("SetDebugSkeleton", new { show }).GetAwaiter().GetResult();
+        }
+
+        public bool GetDebugSkeleton()
+        {
+            return CallSkeletonBoolAsync("GetDebugSkeleton", null).GetAwaiter().GetResult();
+        }
+
         public JsonElement? GetAttachment(string attachmentId)
         {
             var je = CallSkeletonJsonAsync("GetAttachment", new { attachmentId }).GetAwaiter().GetResult();

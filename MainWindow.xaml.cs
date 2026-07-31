@@ -64,6 +64,11 @@ namespace KfuPet_Tool
             }
         }
 
+        private void DebugSkeleton_Changed(object sender, RoutedEventArgs e)
+        {
+            _viewModel.SetDebugSkeletonCommand.Execute(null);
+        }
+
         private void DrawPreview()
         {
             PreviewCanvas.Children.Clear();

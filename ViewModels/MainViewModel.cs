@@ -24,6 +24,9 @@ namespace KfuPet_Tool.ViewModels
         private bool _isConnected;
 
         [ObservableProperty]
+        private bool _isDebugSkeleton;
+
+        [ObservableProperty]
         private string _statusMessage = "未连接";
 
         [ObservableProperty]
@@ -260,6 +263,7 @@ namespace KfuPet_Tool.ViewModels
                     Log($"已连接：{SelectedPipe}，获取到 {boneIds.Count} 个骨骼");
                     StartHeartbeat();
                     await LoadBoneTreeAsync();
+                    IsDebugSkeleton = await Task.Run(() => _pipeClient.GetDebugSkeleton());
                 }
                 else
                 {
@@ -745,6 +749,24 @@ namespace KfuPet_Tool.ViewModels
             catch (Exception ex)
             {
                 Log($"设置图片可见性失败：{ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private async Task SetDebugSkeletonAsync()
+        {
+            if (!IsConnected) return;
+
+            try
+            {
+                await Task.Run(() => _pipeClient.SetDebugSkeleton(IsDebugSkeleton));
+                Log(IsDebugSkeleton ? "已开启调试线框" : "已关闭调试线框");
+                RaisePreviewUpdated();
+            }
+            catch (Exception ex)
+            {
+                Log($"设置调试线框失败：{ex.Message}");
+                IsDebugSkeleton = !IsDebugSkeleton;
             }
         }
 
