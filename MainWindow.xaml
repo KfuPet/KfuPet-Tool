@@ -11,6 +11,7 @@
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <helpers:InvertBoolConverter x:Key="invertBoolConverter"/>
+        <helpers:NullToVisibilityConverter x:Key="nullToVisibility"/>
         <HierarchicalDataTemplate DataType="{x:Type models:BoneInfo}" ItemsSource="{Binding Children}">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding BoneName}" Margin="2,0"/>
@@ -210,10 +211,10 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="X：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PositionX, UpdateSourceTrigger=PropertyChanged}" 
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PositionX, UpdateSourceTrigger=LostFocus}" 
                                      Padding="3" Margin="0,2"/>
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Y：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PositionY, UpdateSourceTrigger=PropertyChanged}" 
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PositionY, UpdateSourceTrigger=LostFocus}" 
                                      Padding="3" Margin="0,2"/>
                             <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
                                     Command="{Binding DataContext.SetPositionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -228,7 +229,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="角度：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Column="1" Text="{Binding Rotation, UpdateSourceTrigger=PropertyChanged}" 
+                            <TextBox Grid.Column="1" Text="{Binding Rotation, UpdateSourceTrigger=LostFocus}" 
                                      Padding="3" Margin="0,2"/>
                             <Button Grid.Column="2" Content="应用" 
                                     Command="{Binding DataContext.SetRotationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -237,7 +238,7 @@
 
                         <Expander IsExpanded="False" Margin="0,8,0,4">
                             <Expander.Header>
-                                <TextBlock Text="缩放（测试功能，后期可能会抛弃）" FontWeight="Bold" Foreground="#999" FontSize="12"/>
+                                <TextBlock Text="骨骼缩放（测试功能，后期可能会抛弃）" FontWeight="Bold" Foreground="#999" FontSize="12"/>
                             </Expander.Header>
                             <Grid Margin="0,8,0,0">
                                 <Grid.ColumnDefinitions>
@@ -250,10 +251,10 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleX, UpdateSourceTrigger=PropertyChanged}" 
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleX, UpdateSourceTrigger=LostFocus}" 
                                          Padding="3" Margin="0,2"/>
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleY, UpdateSourceTrigger=PropertyChanged}" 
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleY, UpdateSourceTrigger=LostFocus}" 
                                          Padding="3" Margin="0,2"/>
                                 <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
                                         Command="{Binding DataContext.SetScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -302,6 +303,7 @@
 
                         <TextBlock Text="图片挂载" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
                         <ListBox ItemsSource="{Binding Attachments}" 
+                                 SelectedItem="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
                                  MinHeight="60" MaxHeight="150" Margin="0,0,0,8"
                                  BorderBrush="#E0E0E0" BorderThickness="1">
                             <ListBox.ItemTemplate>
@@ -325,6 +327,31 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                        <StackPanel DataContext="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Visibility="{Binding Converter={StaticResource nullToVisibility}}">
+                            <TextBlock Text="图片缩放" FontWeight="Bold" Foreground="#333" Margin="0,0,0,4"/>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleX, UpdateSourceTrigger=LostFocus}" 
+                                         Padding="3" Margin="0,2"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleY, UpdateSourceTrigger=LostFocus}" 
+                                         Padding="3" Margin="0,2"/>
+                                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
+                                        Command="{Binding DataContext.SetAttachmentScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
 
                         <Button Content="挂载图片" 
                                 Command="{Binding DataContext.UploadAndAddAttachmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"

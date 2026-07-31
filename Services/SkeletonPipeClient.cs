@@ -274,8 +274,20 @@ namespace KfuPet.Ipc.Client
 
         public bool SetAttachmentVisible(string attachmentId, bool visible)
         {
-            return CallSkeletonBoolAsync("SetAttachmentVisible",
-                new { attachmentId, visible }).GetAwaiter().GetResult();
+            return CallSkeletonBoolAsync("SetAttachmentVisible", new { attachmentId, visible }).GetAwaiter().GetResult();
+        }
+
+        public bool SetAttachmentScale(string attachmentId, double scaleX, double scaleY)
+        {
+            return CallSkeletonBoolAsync("SetAttachmentScale", new { attachmentId, scaleX, scaleY }).GetAwaiter().GetResult();
+        }
+
+        public (double ScaleX, double ScaleY)? GetAttachmentScale(string attachmentId)
+        {
+            var je = CallSkeletonJsonAsync("GetAttachmentScale", new { attachmentId }).GetAwaiter().GetResult();
+            if (je.ValueKind == JsonValueKind.Null || je.ValueKind == JsonValueKind.Undefined) return null;
+            return (je.TryGetProperty("scaleX", out var sx) ? sx.GetDouble() : 1.0,
+                    je.TryGetProperty("scaleY", out var sy) ? sy.GetDouble() : 1.0);
         }
 
         public IReadOnlyList<string> GetBoneAttachments(string boneId)
@@ -400,6 +412,12 @@ namespace KfuPet.Ipc.Client
                 action = "AddAttachment",
                 @params = new { boneId, attachmentId, name, resourcePath, offsetX, offsetY, pivotX, pivotY, zOrder }
             });
+            return this;
+        }
+
+        public BatchBuilder SetAttachmentScale(string attachmentId, double scaleX, double scaleY)
+        {
+            Operations.Add(new { action = "SetAttachmentScale", @params = new { attachmentId, scaleX, scaleY } });
             return this;
         }
     }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using System.Timers;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,6 +20,9 @@ namespace KfuPet_Tool.ViewModels
 
         [ObservableProperty]
         private BoneInfo? _selectedBone;
+
+        [ObservableProperty]
+        private AttachmentInfo? _selectedAttachment;
 
         [ObservableProperty]
         private bool _isConnected;
@@ -620,12 +624,14 @@ namespace KfuPet_Tool.ViewModels
                         BoneId = je.Value.GetProperty("boneId").GetString() ?? bone.BoneId,
                         Name = je.Value.GetProperty("name").GetString() ?? "",
                         ResourcePath = je.Value.GetProperty("resourcePath").GetString() ?? "",
-                        OffsetX = je.Value.GetProperty("offsetX").GetDouble(),
-                        OffsetY = je.Value.GetProperty("offsetY").GetDouble(),
-                        PivotX = je.Value.GetProperty("pivotX").GetDouble(),
-                        PivotY = je.Value.GetProperty("pivotY").GetDouble(),
-                        ZOrder = je.Value.GetProperty("zOrder").GetInt32(),
-                        Visible = je.Value.GetProperty("visible").GetBoolean()
+                        OffsetX = GetJsonDouble(je.Value, "offsetX"),
+                        OffsetY = GetJsonDouble(je.Value, "offsetY"),
+                        PivotX = GetJsonDouble(je.Value, "pivotX", 0.5),
+                        PivotY = GetJsonDouble(je.Value, "pivotY", 0.5),
+                        ZOrder = je.Value.TryGetProperty("zOrder", out var zo) ? zo.GetInt32() : 0,
+                        Visible = je.Value.TryGetProperty("visible", out var vis) && vis.GetBoolean(),
+                        ScaleX = GetJsonDouble(je.Value, "scaleX", 1.0),
+                        ScaleY = GetJsonDouble(je.Value, "scaleY", 1.0)
                     };
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() => bone.Attachments.Add(att));
@@ -768,6 +774,45 @@ namespace KfuPet_Tool.ViewModels
                 Log($"设置调试线框失败：{ex.Message}");
                 IsDebugSkeleton = !IsDebugSkeleton;
             }
+        }
+
+        [RelayCommand]
+        private async Task SetAttachmentScaleAsync()
+        {
+            var att = SelectedAttachment;
+            if (att == null || !IsConnected) return;
+
+            if (!IsFinite(att.ScaleX, "图片缩放 X") || !IsFinite(att.ScaleY, "图片缩放 Y")) return;
+
+            try
+            {
+                var ok = await Task.Run(() => _pipeClient.SetAttachmentScale(att.Id, att.ScaleX, att.ScaleY));
+                if (ok)
+                {
+                    Log($"已设置图片 {att.Name} 缩放为 ({att.ScaleX:F2}, {att.ScaleY:F2})");
+                    RaisePreviewUpdated();
+                }
+                else
+                {
+                    Log($"设置图片 {att.Name} 缩放失败");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"设置图片缩放失败：{ex.Message}");
+            }
+        }
+
+        private static double GetJsonDouble(JsonElement je, string property, double defaultValue = 0)
+        {
+            if (je.TryGetProperty(property, out var prop) && prop.ValueKind != JsonValueKind.Null)
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetDouble();
+                if (prop.ValueKind == JsonValueKind.String && double.TryParse(prop.GetString(), out var d))
+                    return d;
+            }
+            return defaultValue;
         }
 
     }
