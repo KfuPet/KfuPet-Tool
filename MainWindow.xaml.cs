@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -67,6 +67,21 @@ namespace KfuPet_Tool
         private void DebugSkeleton_Changed(object sender, RoutedEventArgs e)
         {
             _viewModel.SetDebugSkeletonCommand.Execute(null);
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                "KfuPet Tool\n\n" +
+                "是一款提供给开发者或模型创作者的一款编辑软件\n" +
+                "支持骨骼变换、图片挂载、调试线框等功能。\n" +
+                "更多新功能正在开发中...",
+                "关于", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void DrawPreview()
