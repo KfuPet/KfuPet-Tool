@@ -888,8 +888,88 @@ var attachmentIds = client.GetBoneAttachments("head");
 | `SetAttachmentResource` | `attachmentId`, `resourceId`, `resourcePath` | `bool` | 切换图片资源 |
 | `SetAttachmentOffset` | `attachmentId`, `x`, `y` | `bool` | 设置图片偏移 |
 | `SetAttachmentVisible` | `attachmentId`, `visible` | `bool` | 设置图片显隐 |
+| `SetAttachmentScale` | `attachmentId`, `scaleX`, `scaleY` | `bool` | 设置图片 X/Y 缩放 |
+| `GetAttachmentScale` | `attachmentId` | `{scaleX, scaleY}` | 获取图片缩放值 |
 | `GetAttachment` | `attachmentId` | `object` | 获取图片详情 |
 | `GetBoneAttachments` | `boneId` | `string[]` | 获取骨骼上的图片 ID 列表 |
+
+---
+
+### SetAttachmentScale
+
+设置图片的 X/Y 轴缩放比例（默认为 1.0，即原始大小）。
+
+```csharp
+// 将头部图片横向拉伸 1.5 倍，纵向缩小到 0.8 倍
+client.SetAttachmentScale("face", 1.5, 0.8);
+```
+
+**对应 action**：`SetAttachmentScale`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| attachmentId | string | 附件 ID |
+| scaleX | double | X 轴缩放比例（1.0 = 原始大小） |
+| scaleY | double | Y 轴缩放比例（1.0 = 原始大小） |
+
+**返回值**：`bool` — `true` 成功，`false` 附件不存在
+
+---
+
+### GetAttachmentScale
+
+获取图片当前的 X/Y 轴缩放值。
+
+```csharp
+var scale = client.GetAttachmentScale("face");
+if (scale.HasValue)
+    Console.WriteLine($"ScaleX: {scale.Value.ScaleX}, ScaleY: {scale.Value.ScaleY}");
+```
+
+**对应 action**：`GetAttachmentScale`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| attachmentId | string | 附件 ID |
+
+**返回值**：`(double ScaleX, double ScaleY)?` — 缩放值，附件不存在返回 `null`
+
+---
+
+### GetAttachment
+
+获取附件的完整详情。
+
+```csharp
+var detail = client.GetAttachment("face");
+```
+
+**对应 action**：`GetAttachment`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| attachmentId | string | 附件 ID |
+
+**返回值**：`JsonElement?` — 包含 id、boneId、name、resourcePath、offset、pivot、zOrder、visible、scaleX、scaleY
+
+---
+
+### GetBoneAttachments
+
+获取指定骨骼上的所有附件 ID 列表。
+
+```csharp
+var ids = client.GetBoneAttachments("head");
+// 返回 ["face", "hair"]
+```
+
+**对应 action**：`GetBoneAttachments`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| boneId | string | 骨骼 ID |
+
+**返回值**：`string[]` — 附件 ID 数组
 
 ---
 
