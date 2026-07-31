@@ -41,6 +41,7 @@ Service    Service    Service     Service
 - [批量操作](#批量操作)
 - [世界坐标](#世界坐标)
 - [骨骼图片挂载](#骨骼图片挂载)
+- [调试控制](#调试控制)
 - [Action 列表](#action-列表)
 - [骨骼 ID 列表](#骨骼-id-列表)
 
@@ -881,6 +882,8 @@ var attachmentIds = client.GetBoneAttachments("head");
 | `AddAttachment` | `boneId`, `attachmentId`, `name`, `resourcePath`, `offsetX`, `offsetY`, `pivotX`, `pivotY`, `zOrder` | `bool` | 为骨骼挂载图片 |
 | `UploadResource` | `base64Data`, `boneId`（可选） | `{path}` | 上传图片到资源缓存 |
 | `DeleteResource` | `resourcePath` | `bool` | 删除缓存目录下的资源文件 |
+| `SetDebugSkeleton` | `show` | - | 开关骨骼调试线框 |
+| `GetDebugSkeleton` | 无 | `bool` | 获取调试线框状态 |
 | `RemoveAttachment` | `attachmentId` | `bool` | 移除图片 |
 | `SetAttachmentResource` | `attachmentId`, `resourceId`, `resourcePath` | `bool` | 切换图片资源 |
 | `SetAttachmentOffset` | `attachmentId`, `x`, `y` | `bool` | 设置图片偏移 |
@@ -930,7 +933,41 @@ root
 
 ---
 
-## 完整示例
+## 调试控制
+
+### SetDebugSkeleton
+
+开关骨骼调试线框（蓝色线条 + 关节圆点）。调试线框默认关闭，开启后可在图片挂载的同时可视化骨骼结构，方便开发调试。
+
+```csharp
+// 开启调试线框
+client.SetDebugSkeleton(true);
+
+// 关闭调试线框
+client.SetDebugSkeleton(false);
+```
+
+**对应 action**：`SetDebugSkeleton`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| show | bool | `true` 显示调试线框，`false` 隐藏 |
+
+---
+
+### GetDebugSkeleton
+
+获取调试线框的当前状态。
+
+```csharp
+bool visible = client.GetDebugSkeleton();
+```
+
+**对应 action**：`GetDebugSkeleton`
+
+**返回值**：`bool` — 当前是否显示调试线框
+
+---
 
 ### 示例 1：挥手动作
 
