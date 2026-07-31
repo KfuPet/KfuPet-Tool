@@ -156,11 +156,24 @@ namespace KfuPet_Tool
                 var (x, y) = transformed[bone.BoneId];
                 bool isSelected = bone == _viewModel.SelectedBone;
 
+                var hitArea = new Ellipse
+                {
+                    Width = 20,
+                    Height = 20,
+                    Fill = Brushes.Transparent,
+                    Cursor = System.Windows.Input.Cursors.Hand
+                };
+                hitArea.MouseLeftButtonDown += (s, e) => SelectBoneInPreview(bone);
+                Canvas.SetLeft(hitArea, x - 10);
+                Canvas.SetTop(hitArea, y - 10);
+                PreviewCanvas.Children.Add(hitArea);
+
                 var ellipse = new Ellipse
                 {
                     Width = 10,
                     Height = 10,
-                    Fill = isSelected ? Brushes.Yellow : Brushes.LightCoral
+                    Fill = isSelected ? Brushes.Yellow : Brushes.LightCoral,
+                    IsHitTestVisible = false
                 };
                 Canvas.SetLeft(ellipse, x - 5);
                 Canvas.SetTop(ellipse, y - 5);
@@ -200,6 +213,45 @@ namespace KfuPet_Tool
                 if (!bone.IsActive) continue;
                 result.Add(bone);
                 CollectActiveBones(bone.Children, result);
+            }
+        }
+
+        private void SelectBoneInPreview(BoneInfo bone)
+        {
+            _viewModel.SelectedBone = bone;
+
+            // 在骨骼树中展开父节点并选中
+            ExpandAndSelectTreeViewItem(BoneTreeView, bone);
+            DrawPreview();
+        }
+
+        private void ExpandAndSelectTreeViewItem(ItemsControl treeView, BoneInfo targetBone)
+        {
+            foreach (var item in treeView.Items)
+            {
+                if (item is BoneInfo bone)
+                {
+                    if (bone == targetBone)
+                    {
+                        var container = treeView.ItemContainerGenerator.ContainerFromItem(item) as TreeViewItem;
+                        if (container != null)
+                        {
+                            container.IsSelected = true;
+                            container.BringIntoView();
+                        }
+                        return;
+                    }
+                    if (bone.Children.Count > 0)
+                    {
+                        var container = treeView.ItemContainerGenerator.ContainerFromItem(item) as TreeViewItem;
+                        if (container != null)
+                        {
+                            container.IsExpanded = true;
+                            container.UpdateLayout();
+                            ExpandAndSelectTreeViewItem(container, targetBone);
+                        }
+                    }
+                }
             }
         }
     }
