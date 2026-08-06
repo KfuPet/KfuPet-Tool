@@ -39,5 +39,11 @@ namespace KfuPet_Tool.Models
 
         [ObservableProperty]
         private double _scaleY = 1.0;
+
+        [ObservableProperty]
+        private double _scaleDeltaX;
+
+        [ObservableProperty]
+        private double _scaleDeltaY;
     }
 }

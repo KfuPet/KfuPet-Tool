@@ -21,13 +21,28 @@ namespace KfuPet_Tool.Models
         private double _positionY;
 
         [ObservableProperty]
+        private double _positionDeltaX;
+
+        [ObservableProperty]
+        private double _positionDeltaY;
+
+        [ObservableProperty]
         private double _rotation;
+
+        [ObservableProperty]
+        private double _rotationDelta;
 
         [ObservableProperty]
         private double _scaleX = 1.0;
 
         [ObservableProperty]
         private double _scaleY = 1.0;
+
+        [ObservableProperty]
+        private double _scaleDeltaX;
+
+        [ObservableProperty]
+        private double _scaleDeltaY;
 
         [ObservableProperty]
         private bool _isActive = true;

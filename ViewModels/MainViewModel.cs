@@ -205,6 +205,12 @@ namespace KfuPet_Tool.ViewModels
             return true;
         }
 
+        private static double CalculateDelta(double currentValue, double initialValue)
+        {
+            var delta = currentValue - initialValue;
+            return Math.Abs(delta) < 0.000001 ? 0 : Math.Round(delta, 6);
+        }
+
         [RelayCommand]
         private void ScanPipes()
         {
@@ -311,6 +317,7 @@ namespace KfuPet_Tool.ViewModels
         {
             try
             {
+                var existingBones = GetAllBones().ToDictionary(b => b.BoneId);
                 var boneIds = await Task.Run(() => _pipeClient.GetBoneIds());
                 var boneDict = new Dictionary<string, BoneInfo>();
 
@@ -324,21 +331,54 @@ namespace KfuPet_Tool.ViewModels
                 {
                     bone.BoneName = await Task.Run(() => _pipeClient.GetBoneName(bone.BoneId) ?? bone.BoneId);
                     bone.ParentBoneId = await Task.Run(() => _pipeClient.GetParentBoneId(bone.BoneId));
+                    existingBones.TryGetValue(bone.BoneId, out var existingBone);
 
                     var pos = await Task.Run(() => _pipeClient.GetPosition(bone.BoneId));
                     if (pos.HasValue)
                     {
-                        bone.PositionX = pos.Value.X;
-                        bone.PositionY = pos.Value.Y;
+                        if (existingBone != null)
+                        {
+                            bone.PositionX = existingBone.PositionX;
+                            bone.PositionY = existingBone.PositionY;
+                            bone.PositionDeltaX = CalculateDelta(pos.Value.X, existingBone.PositionX);
+                            bone.PositionDeltaY = CalculateDelta(pos.Value.Y, existingBone.PositionY);
+                        }
+                        else
+                        {
+                            bone.PositionX = pos.Value.X;
+                            bone.PositionY = pos.Value.Y;
+                        }
                     }
 
-                    bone.Rotation = await Task.Run(() => _pipeClient.GetRotation(bone.BoneId)) ?? 0;
+                    var rotation = await Task.Run(() => _pipeClient.GetRotation(bone.BoneId));
+                    if (rotation.HasValue)
+                    {
+                        if (existingBone != null)
+                        {
+                            bone.Rotation = existingBone.Rotation;
+                            bone.RotationDelta = CalculateDelta(rotation.Value, existingBone.Rotation);
+                        }
+                        else
+                        {
+                            bone.Rotation = rotation.Value;
+                        }
+                    }
 
                     var scale = await Task.Run(() => _pipeClient.GetScale(bone.BoneId));
                     if (scale.HasValue)
                     {
-                        bone.ScaleX = scale.Value.X;
-                        bone.ScaleY = scale.Value.Y;
+                        if (existingBone != null)
+                        {
+                            bone.ScaleX = existingBone.ScaleX;
+                            bone.ScaleY = existingBone.ScaleY;
+                            bone.ScaleDeltaX = CalculateDelta(scale.Value.X, existingBone.ScaleX);
+                            bone.ScaleDeltaY = CalculateDelta(scale.Value.Y, existingBone.ScaleY);
+                        }
+                        else
+                        {
+                            bone.ScaleX = scale.Value.X;
+                            bone.ScaleY = scale.Value.Y;
+                        }
                     }
 
                     bone.IsActive = await Task.Run(() => _pipeClient.IsActive(bone.BoneId)) ?? true;
@@ -379,18 +419,25 @@ namespace KfuPet_Tool.ViewModels
             var bone = SelectedBone;
             if (bone == null || !IsConnected) return;
 
-            if (!IsFinite(bone.PositionX, "位置 X") || !IsFinite(bone.PositionY, "位置 Y")) return;
+            var deltaX = bone.PositionDeltaX;
+            var deltaY = bone.PositionDeltaY;
+            var targetX = bone.PositionX + deltaX;
+            var targetY = bone.PositionY + deltaY;
+            if (!IsFinite(deltaX, "位置 X 修改量") ||
+                !IsFinite(deltaY, "位置 Y 修改量") ||
+                !IsFinite(targetX, "位置 X 结果") ||
+                !IsFinite(targetY, "位置 Y 结果")) return;
 
             try
             {
-                var ok = await Task.Run(() => _pipeClient.SetPosition(bone.BoneId, bone.PositionX, bone.PositionY));
+                var ok = await Task.Run(() => _pipeClient.SetPosition(bone.BoneId, targetX, targetY));
                 if (!ok)
                 {
                     Log("设置位置失败");
                     return;
                 }
                 await UpdateWorldPositionAsync(bone);
-                Log($"已设置 {bone.BoneName} 位置为 ({bone.PositionX:F1}, {bone.PositionY:F1})");
+                Log($"已设置 {bone.BoneName} 位置偏移为 ({deltaX:F2}, {deltaY:F2})，实际值为 ({targetX:F2}, {targetY:F2})");
                 RaisePreviewUpdated();
             }
             catch (Exception ex)
@@ -405,12 +452,14 @@ namespace KfuPet_Tool.ViewModels
             var bone = SelectedBone;
             if (bone == null || !IsConnected) return;
 
-            if (!IsFinite(bone.Rotation, "旋转角度")) return;
+            var deltaDegrees = bone.RotationDelta;
+            var targetDegrees = bone.Rotation + deltaDegrees;
+            if (!IsFinite(deltaDegrees, "旋转角度修改量") ||
+                !IsFinite(targetDegrees, "旋转角度结果")) return;
 
             try
             {
                 var boneId = bone.BoneId;
-                var targetDegrees = bone.Rotation;
                 var ok = await Task.Run(() => _pipeClient.SetRotation(boneId, targetDegrees));
                 if (!ok)
                 {
@@ -425,7 +474,7 @@ namespace KfuPet_Tool.ViewModels
                 }
                 else
                 {
-                    Log($"已设置 {bone.BoneName} 旋转为 {targetDegrees}°");
+                    Log($"已设置 {bone.BoneName} 旋转偏移为 {deltaDegrees:F2}°，实际值为 {targetDegrees:F2}°");
                 }
 
                 await RefreshAllWorldPositionsAsync();
@@ -443,17 +492,24 @@ namespace KfuPet_Tool.ViewModels
             var bone = SelectedBone;
             if (bone == null || !IsConnected) return;
 
-            if (!IsFinite(bone.ScaleX, "缩放 X") || !IsFinite(bone.ScaleY, "缩放 Y")) return;
+            var deltaX = bone.ScaleDeltaX;
+            var deltaY = bone.ScaleDeltaY;
+            var targetX = bone.ScaleX + deltaX;
+            var targetY = bone.ScaleY + deltaY;
+            if (!IsFinite(deltaX, "缩放 X 修改量") ||
+                !IsFinite(deltaY, "缩放 Y 修改量") ||
+                !IsFinite(targetX, "缩放 X 结果") ||
+                !IsFinite(targetY, "缩放 Y 结果")) return;
 
             try
             {
-                var ok = await Task.Run(() => _pipeClient.SetScale(bone.BoneId, bone.ScaleX, bone.ScaleY));
+                var ok = await Task.Run(() => _pipeClient.SetScale(bone.BoneId, targetX, targetY));
                 if (!ok)
                 {
                     Log("设置缩放失败");
                     return;
                 }
-                Log($"已设置 {bone.BoneName} 缩放为 ({bone.ScaleX:F2}, {bone.ScaleY:F2})");
+                Log($"已设置 {bone.BoneName} 缩放偏移为 ({deltaX:F2}, {deltaY:F2})，实际值为 ({targetX:F2}, {targetY:F2})");
                 await RefreshAllWorldPositionsAsync();
                 RaisePreviewUpdated();
             }
@@ -548,6 +604,11 @@ namespace KfuPet_Tool.ViewModels
                 bone.ScaleY = scale.Value.Y;
             }
 
+            bone.PositionDeltaX = 0;
+            bone.PositionDeltaY = 0;
+            bone.RotationDelta = 0;
+            bone.ScaleDeltaX = 0;
+            bone.ScaleDeltaY = 0;
             bone.IsActive = await Task.Run(() => _pipeClient.IsActive(bone.BoneId)) ?? true;
         }
 
@@ -609,6 +670,7 @@ namespace KfuPet_Tool.ViewModels
         {
             try
             {
+                var existingAttachments = bone.Attachments.ToDictionary(a => a.Id);
                 var ids = await Task.Run(() => _pipeClient.GetBoneAttachments(bone.BoneId));
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() => bone.Attachments.Clear());
@@ -617,6 +679,10 @@ namespace KfuPet_Tool.ViewModels
                 {
                     var je = await Task.Run(() => _pipeClient.GetAttachment(id));
                     if (je == null) continue;
+                    var attachmentScale = await Task.Run(() => _pipeClient.GetAttachmentScale(id));
+                    var currentScaleX = attachmentScale?.ScaleX ?? GetJsonDouble(je.Value, "scaleX", 1.0);
+                    var currentScaleY = attachmentScale?.ScaleY ?? GetJsonDouble(je.Value, "scaleY", 1.0);
+                    existingAttachments.TryGetValue(id, out var existingAttachment);
 
                     var att = new AttachmentInfo
                     {
@@ -630,8 +696,14 @@ namespace KfuPet_Tool.ViewModels
                         PivotY = GetJsonDouble(je.Value, "pivotY", 0.5),
                         ZOrder = je.Value.TryGetProperty("zOrder", out var zo) ? zo.GetInt32() : 0,
                         Visible = je.Value.TryGetProperty("visible", out var vis) && vis.GetBoolean(),
-                        ScaleX = GetJsonDouble(je.Value, "scaleX", 1.0),
-                        ScaleY = GetJsonDouble(je.Value, "scaleY", 1.0)
+                        ScaleX = existingAttachment?.ScaleX ?? currentScaleX,
+                        ScaleY = existingAttachment?.ScaleY ?? currentScaleY,
+                        ScaleDeltaX = existingAttachment == null
+                            ? 0
+                            : CalculateDelta(currentScaleX, existingAttachment.ScaleX),
+                        ScaleDeltaY = existingAttachment == null
+                            ? 0
+                            : CalculateDelta(currentScaleY, existingAttachment.ScaleY)
                     };
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() => bone.Attachments.Add(att));
@@ -782,14 +854,21 @@ namespace KfuPet_Tool.ViewModels
             var att = SelectedAttachment;
             if (att == null || !IsConnected) return;
 
-            if (!IsFinite(att.ScaleX, "图片缩放 X") || !IsFinite(att.ScaleY, "图片缩放 Y")) return;
+            var deltaX = att.ScaleDeltaX;
+            var deltaY = att.ScaleDeltaY;
+            var targetX = att.ScaleX + deltaX;
+            var targetY = att.ScaleY + deltaY;
+            if (!IsFinite(deltaX, "图片缩放 X 修改量") ||
+                !IsFinite(deltaY, "图片缩放 Y 修改量") ||
+                !IsFinite(targetX, "图片缩放 X 结果") ||
+                !IsFinite(targetY, "图片缩放 Y 结果")) return;
 
             try
             {
-                var ok = await Task.Run(() => _pipeClient.SetAttachmentScale(att.Id, att.ScaleX, att.ScaleY));
+                var ok = await Task.Run(() => _pipeClient.SetAttachmentScale(att.Id, targetX, targetY));
                 if (ok)
                 {
-                    Log($"已设置图片 {att.Name} 缩放为 ({att.ScaleX:F2}, {att.ScaleY:F2})");
+                    Log($"已设置图片 {att.Name} 缩放偏移为 ({deltaX:F2}, {deltaY:F2})，实际值为 ({targetX:F2}, {targetY:F2})");
                     RaisePreviewUpdated();
                 }
                 else

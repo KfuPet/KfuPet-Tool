@@ -228,11 +228,13 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="X：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PositionX, UpdateSourceTrigger=LostFocus}" 
-                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PositionDeltaX, UpdateSourceTrigger=LostFocus}"
+                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"
+                                     ToolTip="相对初始位置的累计修改量"/>
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Y：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PositionY, UpdateSourceTrigger=LostFocus}" 
-                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PositionDeltaY, UpdateSourceTrigger=LostFocus}"
+                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"
+                                     ToolTip="相对初始位置的累计修改量"/>
                             <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
                                     Command="{Binding DataContext.SetPositionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
@@ -246,8 +248,9 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="角度：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Column="1" Text="{Binding Rotation, UpdateSourceTrigger=LostFocus}" 
-                                     Padding="3" Margin="0,2" KeyDown="RotationInput_KeyDown"/>
+                            <TextBox Grid.Column="1" Text="{Binding RotationDelta, UpdateSourceTrigger=LostFocus}"
+                                     Padding="3" Margin="0,2" KeyDown="RotationInput_KeyDown"
+                                     ToolTip="相对初始角度的累计修改量"/>
                             <Button Grid.Column="2" Content="应用" 
                                     Command="{Binding DataContext.SetRotationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
@@ -268,11 +271,13 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleX, UpdateSourceTrigger=LostFocus}" 
-                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
+                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"
+                                         ToolTip="相对初始缩放的累计修改量"/>
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleY, UpdateSourceTrigger=LostFocus}" 
-                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
+                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"
+                                         ToolTip="相对初始缩放的累计修改量"/>
                                 <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
                                         Command="{Binding DataContext.SetScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
@@ -398,11 +403,13 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleX, UpdateSourceTrigger=LostFocus}" 
-                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
+                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"
+                                         ToolTip="相对图片初始缩放的累计修改量"/>
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleY, UpdateSourceTrigger=LostFocus}" 
-                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
+                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"
+                                         ToolTip="相对图片初始缩放的累计修改量"/>
                                 <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
                                         Command="{Binding DataContext.SetAttachmentScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
