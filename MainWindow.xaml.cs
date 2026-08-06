@@ -1,5 +1,6 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using KfuPet_Tool.Models;
@@ -17,6 +18,42 @@ namespace KfuPet_Tool
             _viewModel = new MainViewModel();
             DataContext = _viewModel;
             _viewModel.PreviewUpdated += ViewModel_PreviewUpdated;
+        }
+
+        private void PositionInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            ApplyOnEnter(sender, e, _viewModel.SetPositionCommand);
+        }
+
+        private void RotationInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            ApplyOnEnter(sender, e, _viewModel.SetRotationCommand);
+        }
+
+        private void ScaleInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            ApplyOnEnter(sender, e, _viewModel.SetScaleCommand);
+        }
+
+        private void AttachmentScaleInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            ApplyOnEnter(sender, e, _viewModel.SetAttachmentScaleCommand);
+        }
+
+        private static void ApplyOnEnter(object sender, KeyEventArgs e, ICommand command)
+        {
+            if (e.Key != Key.Enter || sender is not TextBox textBox)
+            {
+                return;
+            }
+
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+            if (!Validation.GetHasError(textBox) && command.CanExecute(null))
+            {
+                command.Execute(null);
+            }
+
+            e.Handled = true;
         }
 
         private void ViewModel_PreviewUpdated(object? sender, EventArgs e)
