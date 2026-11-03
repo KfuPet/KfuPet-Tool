@@ -5,21 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="KfuPet Tool - 启动选择"
-        Width="470" Height="400"
+        Width="490" Height="430"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="#FFFFFF">
+        Style="{StaticResource AppWindowStyle}">
     <Window.Resources>
 
-        <!-- 选项卡片：整个卡片可点击勾选，悬停/选中带过渡动画 -->
+        <!-- 选项卡片：整个卡片可点击勾选，悬停/选中带过渡 -->
         <Style x:Key="OptionCard" TargetType="CheckBox">
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
-                        <Border x:Name="Card" CornerRadius="12"
-                                Background="#F7F7FA" BorderBrush="#E2E2E8" BorderThickness="1.5"
+                        <Border x:Name="Card" CornerRadius="10"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource LineBrush}" BorderThickness="1.5"
                                 Padding="16,14" SnapsToDevicePixels="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -30,7 +33,8 @@
                                 <ContentPresenter Grid.Column="0" VerticalAlignment="Center"/>
 
                                 <Border x:Name="Box" Grid.Column="1" Width="22" Height="22" CornerRadius="6"
-                                        Background="#FFFFFF" BorderBrush="#C5C5CC" BorderThickness="1.5"
+                                        Background="{StaticResource InputBrush}"
+                                        BorderBrush="{StaticResource LineStrongBrush}" BorderThickness="1.5"
                                         VerticalAlignment="Center" Margin="12,0,0,0">
                                     <Path x:Name="Tick" Data="M1,6 L5,10 L12,2"
                                           Stroke="#FFFFFF" StrokeThickness="2.2"
@@ -42,14 +46,14 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Card" Property="BorderBrush" Value="#4E8DF5"/>
-                                <Setter TargetName="Card" Property="Background" Value="#F2F6FE"/>
+                                <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="Card" Property="Background" Value="{StaticResource SurfaceHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Card" Property="BorderBrush" Value="#22C55E"/>
-                                <Setter TargetName="Card" Property="Background" Value="#EAF9F0"/>
-                                <Setter TargetName="Box" Property="Background" Value="#22C55E"/>
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#22C55E"/>
+                                <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+                                <Setter TargetName="Card" Property="Background" Value="#182A20"/>
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
                                 <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -58,68 +62,38 @@
             </Setter>
         </Style>
 
-        <!-- 主按钮：悬停时背景变亮并轻微放大 -->
-        <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
+        <!-- 主按钮 -->
+        <Style x:Key="LauncherPrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" CornerRadius="9" Background="#2563EB" Padding="26,10"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
-                            </Border.RenderTransform>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3B82F6"/>
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.05" Duration="0:0:0.12"/>
-                                            <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.05" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
-                                            <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1D4ED8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template" Value="{StaticResource PrimaryButtonTemplate}"/>
         </Style>
 
         <!-- 次要按钮：描边风格 -->
-        <Style x:Key="GhostButton" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="#55555F"/>
+        <Style x:Key="LauncherGhostButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineStrongBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" CornerRadius="9" Background="Transparent"
-                                BorderBrush="#D5D5DC" BorderThickness="1.5" Padding="22,10">
+                        <Border x:Name="Bd" CornerRadius="9" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#F0F0F3"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#BFBFC8"/>
-                                <Setter Property="Foreground" Value="#1F1F23"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceHoverBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource InputBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -130,7 +104,7 @@
 
     <Grid x:Name="Root" Opacity="0" Background="Transparent">
         <Grid.RenderTransform>
-            <TranslateTransform x:Name="RootTranslate" Y="18"/>
+            <TranslateTransform x:Name="RootTranslate" Y="16"/>
         </Grid.RenderTransform>
         <Grid.Triggers>
             <EventTrigger RoutedEvent="FrameworkElement.Loaded">
@@ -151,35 +125,44 @@
 
         <StackPanel Margin="28,26,28,24">
 
-            <TextBlock Text="KfuPet Tool" FontSize="22" FontWeight="Bold" Foreground="#1F1F23"/>
-            <TextBlock Text="请选择本次要启动的功能（可多选）" FontSize="13"
-                       Foreground="#6B6B75" Margin="0,6,0,0"/>
+            <StackPanel Orientation="Horizontal">
+                <Border Width="4" Height="22" CornerRadius="2" Background="{StaticResource AccentBrush}"
+                        VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="KfuPet Tool" FontSize="22" FontWeight="Bold"
+                           Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="请选择本次要启动的功能（可多选）" FontSize="12.5"
+                       Foreground="{StaticResource TextMutedBrush}" Margin="14,7,0,0"/>
 
             <StackPanel Margin="0,22,0,0">
 
                 <CheckBox x:Name="MainProgramCheck" Style="{StaticResource OptionCard}" IsChecked="True">
                     <StackPanel>
-                        <TextBlock Text="主程序" FontSize="15" FontWeight="SemiBold" Foreground="#1F1F23"/>
+                        <TextBlock Text="主程序" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}"/>
                         <TextBlock Text="骨骼编辑、图片挂载、调试线框等核心功能"
-                                   FontSize="12" Foreground="#7A7A85" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                   FontSize="12" Foreground="{StaticResource TextDimBrush}"
+                                   Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </CheckBox>
 
                 <CheckBox x:Name="ServerLogCheck" Style="{StaticResource OptionCard}">
                     <StackPanel>
-                        <TextBlock Text="服务端日志" FontSize="15" FontWeight="SemiBold" Foreground="#1F1F23"/>
+                        <TextBlock Text="服务端日志" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}"/>
                         <TextBlock Text="独立查看并保存 KfuPet 服务端输出日志"
-                                   FontSize="12" Foreground="#7A7A85" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                   FontSize="12" Foreground="{StaticResource TextDimBrush}"
+                                   Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </CheckBox>
 
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-                <Button Content="取消" Style="{StaticResource GhostButton}"
-                        IsCancel="True" Click="Cancel_Click" Margin="0,0,12,0"/>
-                <Button Content="确认启动" Style="{StaticResource PrimaryButton}"
-                        IsDefault="True" Click="Confirm_Click"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="取消" Style="{StaticResource LauncherGhostButton}"
+                        IsCancel="True" Click="Cancel_Click" Margin="0,0,12,0" Padding="24,10"/>
+                <Button Content="确认启动" Style="{StaticResource LauncherPrimaryButton}"
+                        IsDefault="True" Click="Confirm_Click" Padding="26,10"/>
             </StackPanel>
 
         </StackPanel>

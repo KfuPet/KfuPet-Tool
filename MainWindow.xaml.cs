@@ -11,14 +11,22 @@ namespace KfuPet_Tool
 {
     public partial class MainWindow : Window
     {
+        private static readonly SolidColorBrush PreviewLineBrush = new(Color.FromRgb(0x5F, 0x7F, 0xC0));
+        private static readonly SolidColorBrush PreviewSelectedBrush = new(Color.FromRgb(0xFF, 0xC8, 0x57));
+        private static readonly SolidColorBrush PreviewDotBrush = new(Color.FromRgb(0x7F, 0xB3, 0xFF));
+        private static readonly SolidColorBrush PreviewLabelBrush = new(Color.FromRgb(0xC9, 0xC9, 0xD6));
+        private static readonly SolidColorBrush PreviewEmptyBrush = new(Color.FromRgb(0x86, 0x86, 0x96));
+
         private MainViewModel _viewModel;
 
         public MainWindow()
         {
             InitializeComponent();
+            DarkTitleBar.Apply(this);
             _viewModel = new MainViewModel();
             DataContext = _viewModel;
             _viewModel.PreviewUpdated += ViewModel_PreviewUpdated;
+            DrawPreview();
         }
 
         private void PositionInput_KeyDown(object sender, KeyEventArgs e)
@@ -136,7 +144,7 @@ namespace KfuPet_Tool
 
             if (!_viewModel.IsConnected || _viewModel.RootBones.Count == 0)
             {
-                DrawCenteredText("请先连接 KfuPet", Brushes.Gray, 14, canvasW, canvasH);
+                DrawCenteredText("请先连接 KfuPet", PreviewEmptyBrush, 14, canvasW, canvasH);
                 return;
             }
 
@@ -145,7 +153,7 @@ namespace KfuPet_Tool
 
             if (activeBones.Count == 0)
             {
-                DrawCenteredText("无激活骨骼", Brushes.Gray, 14, canvasW, canvasH);
+                DrawCenteredText("无激活骨骼", PreviewEmptyBrush, 14, canvasW, canvasH);
                 return;
             }
 
@@ -187,8 +195,8 @@ namespace KfuPet_Tool
                         Y1 = py,
                         X2 = x,
                         Y2 = y,
-                        Stroke = isSelected ? Brushes.Yellow : Brushes.LightBlue,
-                        StrokeThickness = isSelected ? 3 : 2
+                        Stroke = isSelected ? PreviewSelectedBrush : PreviewLineBrush,
+                        StrokeThickness = isSelected ? 3 : 1.6
                     };
                     PreviewCanvas.Children.Add(line);
                 }
@@ -215,7 +223,7 @@ namespace KfuPet_Tool
                 {
                     Width = 10,
                     Height = 10,
-                    Fill = isSelected ? Brushes.Yellow : Brushes.LightCoral,
+                    Fill = isSelected ? PreviewSelectedBrush : PreviewDotBrush,
                     IsHitTestVisible = false
                 };
                 Canvas.SetLeft(ellipse, x - 5);
@@ -225,7 +233,7 @@ namespace KfuPet_Tool
                 var label = new TextBlock
                 {
                     Text = bone.BoneName,
-                    Foreground = Brushes.White,
+                    Foreground = PreviewLabelBrush,
                     FontSize = 10
                 };
                 label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));

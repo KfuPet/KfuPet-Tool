@@ -7,19 +7,47 @@
         xmlns:models="clr-namespace:KfuPet_Tool.Models"
         xmlns:helpers="clr-namespace:KfuPet_Tool.Helpers"
         mc:Ignorable="d"
-        Title="KfuPet Tool" Height="700" Width="1100"
-        WindowStartupLocation="CenterScreen">
+        Title="KfuPet Tool" Height="720" Width="1240"
+        MinHeight="620" MinWidth="1060"
+        WindowStartupLocation="CenterScreen"
+        Style="{StaticResource AppWindowStyle}">
     <Window.Resources>
         <helpers:InvertBoolConverter x:Key="invertBoolConverter"/>
         <helpers:NullToVisibilityConverter x:Key="nullToVisibility"/>
+
         <HierarchicalDataTemplate DataType="{x:Type models:BoneInfo}" ItemsSource="{Binding Children}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding BoneName}" Margin="2,0"/>
-                <TextBlock Text=" (" Foreground="Gray" FontSize="11"/>
-                <TextBlock Text="{Binding BoneId}" Foreground="Gray" FontSize="11"/>
-                <TextBlock Text=")" Foreground="Gray" FontSize="11"/>
+                <TextBlock Text="{Binding BoneName}" FontSize="12.5" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding BoneId}" Foreground="{StaticResource TextMutedBrush}"
+                           FontFamily="Consolas, Microsoft YaHei UI" FontSize="10.5"
+                           Margin="7,1,0,0" VerticalAlignment="Center"/>
             </StackPanel>
         </HierarchicalDataTemplate>
+
+        <!-- 预览区点阵背景 -->
+        <DrawingBrush x:Key="PreviewGridBrush" TileMode="Tile"
+                      Viewport="0,0,24,24" ViewportUnits="Absolute">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="Transparent">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,24,24"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#2B2B34">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="12,12" RadiusX="1" RadiusY="1"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
+        <Style x:Key="PanelHeaderButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="9,3"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -29,414 +57,570 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
-            <MenuItem Header="文件(_F)">
-                <MenuItem Header="保存日志(_S)" Command="{Binding SaveLogCommand}" InputGestureText="Ctrl+S"/>
-                <Separator/>
-                <MenuItem Header="退出(_X)" Click="Exit_Click" InputGestureText="Alt+F4"/>
-            </MenuItem>
-            <MenuItem Header="视图(_V)">
-                <MenuItem Header="刷新骨骼树(_R)" Command="{Binding RefreshCommand}" InputGestureText="F5"/>
-                <Separator/>
-                <MenuItem Header="清除日志(_C)" Command="{Binding ClearLogCommand}"/>
-            </MenuItem>
-            <MenuItem Header="工具(_T)">
-                <MenuItem Header="服务端日志(_L)" Click="ServerLog_Click"/>
-            </MenuItem>
-            <MenuItem Header="帮助(_H)">
-                <MenuItem Header="关于(_A)" Click="About_Click"/>
-            </MenuItem>
-        </Menu>
+        <!-- 菜单栏 -->
+        <Border Grid.Row="0" Background="{StaticResource BgBrush}"
+                BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+            <Menu Padding="8,3" Background="Transparent">
+                <MenuItem Header="文件(_F)">
+                    <MenuItem Header="保存日志(_S)" Command="{Binding SaveLogCommand}" InputGestureText="Ctrl+S"/>
+                    <Separator/>
+                    <MenuItem Header="退出(_X)" Click="Exit_Click" InputGestureText="Alt+F4"/>
+                </MenuItem>
+                <MenuItem Header="视图(_V)">
+                    <MenuItem Header="刷新骨骼树(_R)" Command="{Binding RefreshCommand}" InputGestureText="F5"/>
+                    <Separator/>
+                    <MenuItem Header="清除日志(_C)" Command="{Binding ClearLogCommand}"/>
+                </MenuItem>
+                <MenuItem Header="工具(_T)">
+                    <MenuItem Header="服务端日志(_L)" Click="ServerLog_Click"/>
+                </MenuItem>
+                <MenuItem Header="帮助(_H)">
+                    <MenuItem Header="关于(_A)" Click="About_Click"/>
+                </MenuItem>
+            </Menu>
+        </Border>
 
-        <Border Grid.Row="1" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
-            <Grid Margin="10,8">
+        <!-- 连接工具栏 -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="240"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="管道：" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="0" Text="管道" Style="{StaticResource FieldLabel}"
+                           Margin="0,0,8,0"/>
                 <ComboBox Grid.Column="1" ItemsSource="{Binding AvailablePipes}"
                           SelectedItem="{Binding SelectedPipe}"
-                          Margin="5,0" Padding="3"
                           IsEnabled="{Binding IsConnected, Converter={StaticResource invertBoolConverter}}"/>
-                <Button Grid.Column="2" Content="扫描" Command="{Binding ScanPipesCommand}" 
-                        Padding="10,3" Margin="5,0"/>
-                <Button Grid.Column="3" Content="连接" Command="{Binding ConnectCommand}" 
-                        IsEnabled="{Binding IsLoading, Converter={StaticResource invertBoolConverter}}"
-                        Padding="15,3" Margin="5,0"/>
-                <Button Grid.Column="4" Content="断开" Command="{Binding DisconnectCommand}" 
-                        IsEnabled="{Binding IsConnected}"
-                        Padding="15,3" Margin="5,0"/>
+                <Button Grid.Column="2" Content="扫描" Command="{Binding ScanPipesCommand}"
+                        Margin="8,0,0,0" Padding="12,6"/>
+                <Button Grid.Column="3" Content="连接" Command="{Binding ConnectCommand}"
+                        Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Padding="18,6"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource invertBoolConverter}}"/>
+                <Button Grid.Column="4" Content="断开" Command="{Binding DisconnectCommand}"
+                        Margin="8,0,0,0" Padding="12,6"
+                        IsEnabled="{Binding IsConnected}"/>
 
-                <StackPanel Grid.Column="6" Orientation="Horizontal">
-                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,5,0">
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="Red"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                        <Setter Property="Fill" Value="Green"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
-                    <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#666"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,2"/>
-                    <CheckBox Content="调试线框" IsChecked="{Binding IsDebugSkeleton}" 
+                <Border Grid.Column="6" CornerRadius="12" Background="{StaticResource SurfaceAltBrush}"
+                        BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                        Padding="11,4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,7,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource DangerBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextDimBrush}"
+                                   FontSize="11.5" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Column="7" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="16,0,0,0">
+                    <Rectangle Width="1" Height="18" Fill="{StaticResource LineBrush}"
+                               VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <CheckBox Content="调试线框" Style="{StaticResource ToggleSwitch}"
+                              IsChecked="{Binding IsDebugSkeleton}"
                               IsEnabled="{Binding IsConnected}"
-                              VerticalAlignment="Center" Margin="5,0"
+                              VerticalAlignment="Center"
                               Checked="DebugSkeleton_Changed" Unchecked="DebugSkeleton_Changed"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
+        <!-- 主工作区 -->
+        <Grid Grid.Row="2" Margin="12,10,12,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280"/>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="330" MinWidth="260"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*" MinWidth="380"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="365" MinWidth="310"/>
             </Grid.ColumnDefinitions>
 
+            <!-- 左：骨骼树 + 日志 -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="180"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="210"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="10,6">
+                <Border Grid.Row="0" Style="{StaticResource PanelBorder}">
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="骨骼结构" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="刷新" Command="{Binding RefreshCommand}" 
-                                IsEnabled="{Binding IsConnected}"
-                                Padding="8,2" FontSize="11"/>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" BorderBrush="{StaticResource LineBrush}"
+                                BorderThickness="0,0,0,1" Padding="12,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5"
+                                               Fill="{StaticResource AccentBrush}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="骨骼结构" FontWeight="SemiBold" FontSize="12"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="刷新" Command="{Binding RefreshCommand}"
+                                        IsEnabled="{Binding IsConnected}"
+                                        Style="{StaticResource PanelHeaderButton}"
+                                        VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <TreeView Grid.Row="1" x:Name="BoneTreeView" ItemsSource="{Binding RootBones}"
+                                  SelectedItemChanged="BoneTreeView_SelectedItemChanged"
+                                  Margin="4,4,4,6"/>
+                        <TextBlock Grid.Row="1" Text="连接 KfuPet 后在此显示骨骼结构"
+                                   Foreground="{StaticResource TextMutedBrush}" FontSize="11.5"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Grid>
                 </Border>
 
-                <TreeView Grid.Row="1" x:Name="BoneTreeView" ItemsSource="{Binding RootBones}"
-                          SelectedItemChanged="BoneTreeView_SelectedItemChanged"
-                          BorderThickness="0">
-                </TreeView>
+                <GridSplitter Grid.Row="1" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"/>
 
-                <GridSplitter Grid.Row="2" Height="4" Background="#E0E0E0" HorizontalAlignment="Stretch"/>
+                <Border Grid.Row="2" Style="{StaticResource PanelBorder}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" BorderBrush="{StaticResource LineBrush}"
+                                BorderThickness="0,0,0,1" Padding="12,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5"
+                                               Fill="{StaticResource WarningBrush}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="日志输出" FontWeight="SemiBold" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="保存"
+                                            Command="{Binding DataContext.SaveLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Style="{StaticResource PanelHeaderButton}" Margin="0,0,2,0"/>
+                                    <Button Content="清除"
+                                            Command="{Binding DataContext.ClearLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Style="{StaticResource PanelHeaderButton}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Background="{StaticResource ConsoleBrush}"
+                                CornerRadius="0,0,9,9" ClipToBounds="True" Padding="4,5">
+                            <ListBox ItemsSource="{Binding LogMessages}"
+                                     Background="Transparent" BorderThickness="0"
+                                     FontSize="11" FontFamily="Cascadia Mono, Consolas"
+                                     Foreground="#C7C7D2"
+                                     VirtualizingPanel.ScrollUnit="Pixel"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="2,1"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
 
-                <Grid Grid.Row="3">
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- 中：骨骼预览 -->
+            <Border Grid.Column="2" Style="{StaticResource PanelBorder}">
+                <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,1" Padding="10,4">
+                    <Border Grid.Row="0" BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="0,0,0,1" Padding="12,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="日志输出" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <Button Content="保存" 
-                                        Command="{Binding DataContext.SaveLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Padding="6,2" FontSize="11" Margin="0,0,4,0"/>
-                                <Button Content="清除" 
-                                        Command="{Binding DataContext.ClearLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Padding="6,2" FontSize="11"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5"
+                                           Fill="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
+                                <TextBlock Text="骨骼预览" FontWeight="SemiBold" FontSize="12"/>
                             </StackPanel>
+                            <TextBlock Grid.Column="1" Text="点击节点可在树中定位"
+                                       Style="{StaticResource MutedText}"/>
                         </Grid>
                     </Border>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding LogMessages}" 
-                             BorderThickness="0" Background="White"
-                             FontSize="11" FontFamily="Consolas"
-                             VirtualizingPanel.ScrollUnit="Pixel">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="4,1"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Border Grid.Row="1" Background="{StaticResource PreviewBrush}"
+                            CornerRadius="0,0,9,9" ClipToBounds="True">
+                        <Grid Background="{StaticResource PreviewGridBrush}">
+                            <Viewbox Stretch="Uniform" Margin="18">
+                                <Canvas x:Name="PreviewCanvas" Width="400" Height="400"
+                                        Background="Transparent"/>
+                            </Viewbox>
+                        </Grid>
+                    </Border>
                 </Grid>
-            </Grid>
+            </Border>
 
-            <GridSplitter Grid.Column="1" Width="1" Background="#E0E0E0" HorizontalAlignment="Stretch"/>
+            <GridSplitter Grid.Column="3" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
 
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="10,6">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="骨骼预览" FontWeight="Bold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Row="1" Background="#1E1E1E" Margin="0">
-                    <Viewbox Stretch="Uniform" Margin="10">
-                        <Canvas x:Name="PreviewCanvas" Width="400" Height="400" Background="#2D2D30">
-                        </Canvas>
-                    </Viewbox>
-                </Border>
-            </Grid>
-
-            <GridSplitter Grid.Column="3" Width="1" Background="#E0E0E0" HorizontalAlignment="Stretch"/>
-
-            <ScrollViewer Grid.Column="4" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="10,0,10,10">
-                    <Border Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="0,6,0,6" Margin="0,0,0,8">
-                        <TextBlock Text="属性面板" FontWeight="Bold"/>
+            <!-- 右：属性面板 -->
+            <Border Grid.Column="4" Style="{StaticResource PanelBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="0,0,0,1" Padding="12,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5"
+                                           Fill="{StaticResource AccentBrush}" Margin="0,0,8,0"/>
+                                <TextBlock Text="属性面板" FontWeight="SemiBold" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedBone.BoneName}"
+                                       Style="{StaticResource MutedText}" MaxWidth="150"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </Grid>
                     </Border>
 
-                    <StackPanel DataContext="{Binding SelectedBone}">
-                        <TextBlock Text="骨骼信息" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="骨骼ID：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding BoneId}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="名称：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BoneName}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="父骨骼：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ParentBoneId, FallbackValue=无}" VerticalAlignment="Center"/>
-                        </Grid>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  Padding="14,4,10,14">
+                        <StackPanel>
+                            <!-- 未选中提示 -->
+                            <Border Margin="0,6,0,0" Padding="12,11"
+                                    Background="{StaticResource SurfaceAltBrush}"
+                                    BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                                    CornerRadius="6">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedBone}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="未选择骨骼，请在左侧骨骼树或预览区点击选择。"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontSize="11.5" TextWrapping="Wrap"/>
+                            </Border>
 
-                        <TextBlock Text="位置" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="X：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PositionDeltaX, UpdateSourceTrigger=LostFocus}"
-                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"
-                                     ToolTip="相对初始位置的累计修改量"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Y：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PositionDeltaY, UpdateSourceTrigger=LostFocus}"
-                                     Padding="3" Margin="0,2" KeyDown="PositionInput_KeyDown"
-                                     ToolTip="相对初始位置的累计修改量"/>
-                            <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
-                                    Command="{Binding DataContext.SetPositionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                        </Grid>
+                            <StackPanel DataContext="{Binding SelectedBone}">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
 
-                        <TextBlock Text="旋转" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="角度：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBox Grid.Column="1" Text="{Binding RotationDelta, UpdateSourceTrigger=LostFocus}"
-                                     Padding="3" Margin="0,2" KeyDown="RotationInput_KeyDown"
-                                     ToolTip="相对初始角度的累计修改量"/>
-                            <Button Grid.Column="2" Content="应用" 
-                                    Command="{Binding DataContext.SetRotationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <Expander IsExpanded="False" Margin="0,8,0,4">
-                            <Expander.Header>
-                                <TextBlock Text="骨骼缩放（测试功能，后期可能会抛弃）" FontWeight="Bold" Foreground="#999" FontSize="12"/>
-                            </Expander.Header>
-                            <Grid Margin="0,8,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
-                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"
-                                         ToolTip="相对初始缩放的累计修改量"/>
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
-                                         Padding="3" Margin="0,2" KeyDown="ScaleInput_KeyDown"
-                                         ToolTip="相对初始缩放的累计修改量"/>
-                                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
-                                        Command="{Binding DataContext.SetScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Expander>
-
-                        <TextBlock Text="状态" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Column="0" Text="激活：" VerticalAlignment="Center" Foreground="#666"/>
-                            <CheckBox Grid.Column="1" IsChecked="{Binding IsActive}" 
-                                      HorizontalAlignment="Left" VerticalAlignment="Center"
-                                      Checked="IsActive_Checked" Unchecked="IsActive_Unchecked"/>
-                        </Grid>
-
-                        <TextBlock Text="世界坐标" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="WorldX：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorldX, StringFormat=F2}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="WorldY：" VerticalAlignment="Center" Foreground="#666"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorldY, StringFormat=F2}" VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <TextBlock Text="操作" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <Button Content="恢复骨骼" Command="{Binding DataContext.ResetBoneCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Padding="10,3" Margin="0,0,5,0" ToolTip="恢复选中骨骼到连接时的初始状态"/>
-                            <Button Content="恢复全部" Command="{Binding DataContext.ResetAllCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Padding="10,3" Background="#FFF0F0" Foreground="Red" ToolTip="恢复所有骨骼到连接时的初始状态"/>
-                        </StackPanel>
-
-                        <TextBlock Text="图片挂载" FontWeight="Bold" Foreground="#333" Margin="0,8,0,4"/>
-                        <ListBox ItemsSource="{Binding Attachments}" 
-                                 SelectedItem="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
-                                 MinHeight="60" MaxHeight="150" Margin="0,0,0,8"
-                                 BorderBrush="#E0E0E0" BorderThickness="1"
-                                 Background="White">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding" Value="6,4"/>
-                                    <Setter Property="Margin" Value="0"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
-                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#E3F2FD"/>
-                                            <Setter Property="BorderBrush" Value="#90CAF9"/>
-                                        </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#F5F5F5"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:AttachmentInfo}">
+                                <TextBlock Text="骨骼信息" Style="{StaticResource SectionHeader}" Margin="0,8,0,7"/>
+                                <Border Background="{StaticResource SurfaceAltBrush}"
+                                        BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="10,9">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="62"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="骨骼 ID"
+                                                   Style="{StaticResource FieldLabel}" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding BoneId}"
+                                                   FontFamily="Consolas, Microsoft YaHei UI" FontSize="11.5"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="名称"
+                                                   Style="{StaticResource FieldLabel}" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BoneName}"
+                                                   FontSize="11.5" TextTrimming="CharacterEllipsis" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="父骨骼"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1"
+                                                   Text="{Binding ParentBoneId, TargetNullValue=无}"
+                                                   FontFamily="Consolas, Microsoft YaHei UI" FontSize="11.5"
+                                                   Foreground="{StaticResource TextDimBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </Grid>
+                                </Border>
+
+                                <TextBlock Text="位置" Style="{StaticResource SectionHeader}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="62"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="X" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6"
+                                             Text="{Binding PositionDeltaX, UpdateSourceTrigger=LostFocus}"
+                                             KeyDown="PositionInput_KeyDown"
+                                             ToolTip="相对初始位置的累计修改量"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Y" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,6,0,0"
+                                             Text="{Binding PositionDeltaY, UpdateSourceTrigger=LostFocus}"
+                                             KeyDown="PositionInput_KeyDown"
+                                             ToolTip="相对初始位置的累计修改量"/>
+                                    <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用"
+                                            Command="{Binding DataContext.SetPositionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Padding="14,4" FontSize="11"
+                                            Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <TextBlock Text="旋转" Style="{StaticResource SectionHeader}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="62"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="角度" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding RotationDelta, UpdateSourceTrigger=LostFocus}"
+                                             KeyDown="RotationInput_KeyDown"
+                                             ToolTip="相对初始角度的累计修改量"/>
+                                    <Button Grid.Column="2" Content="应用"
+                                            Command="{Binding DataContext.SetRotationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Padding="14,4" FontSize="11"
+                                            Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Expander IsExpanded="False" Margin="0,14,0,0">
+                                    <Expander.Header>
+                                        <TextBlock Text="骨骼缩放（测试功能，后期可能会抛弃）"
+                                                   Foreground="{StaticResource TextMutedBrush}" FontSize="11.5"/>
+                                    </Expander.Header>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="62"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <CheckBox Grid.Column="0" IsChecked="{Binding Visible}" 
-                                                  VerticalAlignment="Center" Margin="0,0,8,0"
-                                                  Checked="AttachmentVisible_Changed" 
-                                                  Unchecked="AttachmentVisible_Changed"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" 
-                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                                   FontSize="12"/>
-                                        <Button Grid.Column="2" Content="✕" 
-                                                Width="24" Height="24" FontSize="12"
-                                                Click="RemoveAttachment_Click"
-                                                Background="#FFF0F0" Foreground="#D32F2F"
-                                                BorderBrush="#FFCDD2" BorderThickness="1"
-                                                Cursor="Hand" ToolTip="移除图片">
-                                            <Button.Style>
-                                                <Style TargetType="Button">
-                                                    <Setter Property="Background" Value="#FFF0F0"/>
-                                                    <Setter Property="Foreground" Value="#D32F2F"/>
-                                                    <Setter Property="BorderBrush" Value="#FFCDD2"/>
-                                                    <Setter Property="BorderThickness" Value="1"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FFCDD2"/>
-                                                            <Setter Property="Foreground" Value="#B71C1C"/>
-                                                            <Setter Property="BorderBrush" Value="#E57373"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6"
+                                                 Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
+                                                 KeyDown="ScaleInput_KeyDown"
+                                                 ToolTip="相对初始缩放的累计修改量"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,6,0,0"
+                                                 Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
+                                                 KeyDown="ScaleInput_KeyDown"
+                                                 ToolTip="相对初始缩放的累计修改量"/>
+                                        <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用"
+                                                Command="{Binding DataContext.SetScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Padding="14,4" FontSize="11"
+                                                Margin="8,0,0,0" VerticalAlignment="Center"/>
                                     </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                                </Expander>
 
-                        <StackPanel DataContext="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Visibility="{Binding Converter={StaticResource nullToVisibility}}">
-                            <TextBlock Text="图片缩放" FontWeight="Bold" Foreground="#333" Margin="0,0,0,4"/>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
-                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"
-                                         ToolTip="相对图片初始缩放的累计修改量"/>
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY：" VerticalAlignment="Center" Foreground="#666"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
-                                         Padding="3" Margin="0,2" KeyDown="AttachmentScaleInput_KeyDown"
-                                         ToolTip="相对图片初始缩放的累计修改量"/>
-                                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用" 
-                                        Command="{Binding DataContext.SetAttachmentScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Padding="10,3" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
+                                <TextBlock Text="状态" Style="{StaticResource SectionHeader}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="62"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="激活" Style="{StaticResource FieldLabel}"/>
+                                    <CheckBox Grid.Column="1" Content="启用该骨骼参与预览"
+                                              Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding IsActive}"
+                                              HorizontalAlignment="Left" VerticalAlignment="Center"
+                                              Checked="IsActive_Checked" Unchecked="IsActive_Unchecked"/>
+                                </Grid>
+
+                                <TextBlock Text="世界坐标" Style="{StaticResource SectionHeader}"/>
+                                <Border Background="{StaticResource SurfaceAltBrush}"
+                                        BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="10,9">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="62"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="World X"
+                                                   Style="{StaticResource FieldLabel}" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorldX, StringFormat=F2}"
+                                                   FontFamily="Consolas" FontSize="11.5"
+                                                   Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,7"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="World Y"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorldY, StringFormat=F2}"
+                                                   FontFamily="Consolas" FontSize="11.5"
+                                                   Foreground="{StaticResource TextDimBrush}"/>
+                                    </Grid>
+                                </Border>
+
+                                <TextBlock Text="操作" Style="{StaticResource SectionHeader}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="恢复骨骼"
+                                            Command="{Binding DataContext.ResetBoneCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Padding="12,4" FontSize="11"
+                                            Margin="0,0,4,0"
+                                            ToolTip="恢复选中骨骼到连接时的初始状态"/>
+                                    <Button Content="恢复全部"
+                                            Command="{Binding DataContext.ResetAllCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Style="{StaticResource DangerButton}" Padding="12,4" FontSize="11"
+                                            ToolTip="恢复所有骨骼到连接时的初始状态"/>
+                                </StackPanel>
+
+                                <TextBlock Text="图片挂载" Style="{StaticResource SectionHeader}"/>
+                                <Border Background="{StaticResource SurfaceAltBrush}"
+                                        BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="3" MinHeight="64" MaxHeight="150">
+                                    <ListBox ItemsSource="{Binding Attachments}"
+                                             SelectedItem="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
+                                             Background="Transparent" BorderThickness="0">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem"
+                                                   BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                                <Setter Property="Padding" Value="6,4"/>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:AttachmentInfo}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding Visible}"
+                                                              VerticalAlignment="Center" Margin="0,0,8,0"
+                                                              ToolTip="是否显示该图片"
+                                                              Checked="AttachmentVisible_Changed"
+                                                              Unchecked="AttachmentVisible_Changed"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="11.5" TextTrimming="CharacterEllipsis"
+                                                               Margin="0,0,8,0"/>
+                                                    <Button Grid.Column="2" Content="✕"
+                                                            Width="22" Height="22" FontSize="11"
+                                                            Padding="0" VerticalAlignment="Center"
+                                                            Click="RemoveAttachment_Click"
+                                                            ToolTip="移除图片">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
+                                <StackPanel DataContext="{Binding DataContext.SelectedAttachment, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Visibility="{Binding Converter={StaticResource nullToVisibility}}">
+                                    <TextBlock Text="图片缩放" Style="{StaticResource SectionHeader}"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="62"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="ScaleX"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,6"
+                                                 Text="{Binding ScaleDeltaX, UpdateSourceTrigger=LostFocus}"
+                                                 KeyDown="AttachmentScaleInput_KeyDown"
+                                                 ToolTip="相对图片初始缩放的累计修改量"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="ScaleY"
+                                                   Style="{StaticResource FieldLabel}"/>
+                                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,6,0,0"
+                                                 Text="{Binding ScaleDeltaY, UpdateSourceTrigger=LostFocus}"
+                                                 KeyDown="AttachmentScaleInput_KeyDown"
+                                                 ToolTip="相对图片初始缩放的累计修改量"/>
+                                        <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="应用"
+                                                Command="{Binding DataContext.SetAttachmentScaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Padding="14,4" FontSize="11"
+                                                Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <Button Content="挂载图片"
+                                        Command="{Binding DataContext.UploadAndAddAttachmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        HorizontalAlignment="Stretch" Margin="0,12,0,4" Padding="12,6">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="IsEnabled" Value="{Binding DataContext.IsConnected, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRoot}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="ToolTip" Value="root 骨骼是世界锚点，不承载图片资源"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
-
-                        <Button Content="挂载图片" 
-                                Command="{Binding DataContext.UploadAndAddAttachmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                Padding="10,3" Margin="0,0,0,8">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="IsEnabled" Value="{Binding DataContext.IsConnected, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsRoot}" Value="True">
-                                            <Setter Property="IsEnabled" Value="False"/>
-                                            <Setter Property="ToolTip" Value="root 骨骼是世界锚点，不承载图片资源"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Window>

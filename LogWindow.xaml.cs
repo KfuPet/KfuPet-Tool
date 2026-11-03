@@ -1,4 +1,5 @@
 using System.Windows;
+using KfuPet_Tool.Helpers;
 using KfuPet_Tool.ViewModels;
 
 namespace KfuPet_Tool
@@ -10,6 +11,7 @@ namespace KfuPet_Tool
         public LogWindow()
         {
             InitializeComponent();
+            DarkTitleBar.Apply(this);
             _viewModel = new LogViewModel();
             DataContext = _viewModel;
             Closed += (_, _) => _viewModel.Shutdown();

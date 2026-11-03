@@ -1,4 +1,5 @@
 using System.Windows;
+using KfuPet_Tool.Helpers;
 
 namespace KfuPet_Tool
 {
@@ -14,6 +15,7 @@ namespace KfuPet_Tool
         public LauncherWindow()
         {
             InitializeComponent();
+            DarkTitleBar.Apply(this);
         }
 
         private void Confirm_Click(object sender, RoutedEventArgs e)
