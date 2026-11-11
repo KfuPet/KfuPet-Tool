@@ -155,9 +155,7 @@ KfuPet-Tool/
 
 ## 路线图
 
-- 完善骨骼编辑与图片挂载的交互体验。
-- 规划 Android 端远程调试：安卓端工具通过 HttpServer 远程调用 KfuPet API。
-- 逐步接入更多服务（memory / emotion / vision）。
+- 逐步进行大范围重构
 
 ## 许可证
 
