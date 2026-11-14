@@ -1,0 +1,132 @@
+﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+
+/// <summary>
+/// 角色素材重切工具（供 tools/rebleed.ps1 调用）。
+/// 只做像素级裁切、胶囊遮罩与 alpha 统计，不涉及骨骼或配置。
+/// 注意：Windows PowerShell 5.1 无法解析嵌套类型，因此这里全部使用顶级类型。
+/// </summary>
+public class RebleedImage
+{
+    public int W;
+    public int H;
+    public byte[] P;   // BGRA，行优先
+
+    public static RebleedImage Load(string path)
+    {
+        using (var src = new Bitmap(path))
+        {
+            int w = src.Width, h = src.Height;
+            var rect = new Rectangle(0, 0, w, h);
+            using (var bmp = src.Clone(rect, PixelFormat.Format32bppArgb))
+            {
+                var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                var buf = new byte[data.Stride * h];
+                Marshal.Copy(data.Scan0, buf, 0, buf.Length);
+                bmp.UnlockBits(data);
+
+                var img = new RebleedImage { W = w, H = h, P = new byte[w * h * 4] };
+                for (int y = 0; y < h; y++)
+                    Buffer.BlockCopy(buf, y * data.Stride, img.P, y * w * 4, w * 4);
+                return img;
+            }
+        }
+    }
+
+    public void Save(string path, float dpi)
+    {
+        var rect = new Rectangle(0, 0, W, H);
+        using (var bmp = new Bitmap(W, H, PixelFormat.Format32bppArgb))
+        {
+            var data = bmp.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            var buf = new byte[data.Stride * H];
+            for (int y = 0; y < H; y++)
+                Buffer.BlockCopy(P, y * W * 4, buf, y * data.Stride, W * 4);
+            Marshal.Copy(buf, 0, data.Scan0, buf.Length);
+            bmp.UnlockBits(data);
+            bmp.SetResolution(dpi, dpi);
+            bmp.Save(path, ImageFormat.Png);
+        }
+    }
+}
+
+public static class Rebleed
+{
+    public static RebleedImage Crop(RebleedImage src, int x, int y, int w, int h)
+    {
+        if (x < 0 || y < 0 || x + w > src.W || y + h > src.H)
+            throw new ArgumentException(string.Format(
+                "crop out of range: ({0},{1},{2},{3}) on {4}x{5}", x, y, w, h, src.W, src.H));
+
+        var dst = new RebleedImage { W = w, H = h, P = new byte[w * h * 4] };
+        for (int yy = 0; yy < h; yy++)
+        {
+            int src0 = ((y + yy) * src.W + x) * 4;
+            int dst0 = yy * w * 4;
+            Buffer.BlockCopy(src.P, src0, dst.P, dst0, w * 4);
+        }
+        return dst;
+    }
+
+    /// <summary>圆角胶囊：短边为直径、长边中段为直边，边缘羽化 feather 像素。</summary>
+    public static RebleedImage Capsule(int w, int h, int r, int g, int b, int feather)
+    {
+        var img = new RebleedImage { W = w, H = h, P = new byte[w * h * 4] };
+        double rx = w / 2.0, ry = h / 2.0;
+        double radius = Math.Min(rx, ry);
+        double straight = Math.Max(0.0, Math.Max(rx, ry) - radius);
+        bool vertical = h >= w;
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                double cx = x + 0.5 - rx, cy = y + 0.5 - ry;
+                double d;
+                if (vertical)
+                {
+                    double k = Math.Max(-straight, Math.Min(straight, cy));
+                    d = Math.Sqrt(cx * cx + (cy - k) * (cy - k));
+                }
+                else
+                {
+                    double k = Math.Max(-straight, Math.Min(straight, cx));
+                    d = Math.Sqrt(cy * cy + (cx - k) * (cx - k));
+                }
+
+                double a = radius - d;
+                double alpha = a >= feather ? 1.0 : (a <= 0 ? 0.0 : a / feather);
+                if (alpha <= 0) continue;
+
+                int i = (y * w + x) * 4;
+                img.P[i] = (byte)b;
+                img.P[i + 1] = (byte)g;
+                img.P[i + 2] = (byte)r;
+                img.P[i + 3] = (byte)Math.Round(alpha * 255);
+            }
+        }
+        return img;
+    }
+
+    /// <summary>统计指定行中 alpha &gt; 16 的像素数。</summary>
+    public static int RowCount(RebleedImage img, int y)
+    {
+        if (y < 0 || y >= img.H) return -1;
+        int n = 0;
+        for (int x = 0; x < img.W; x++)
+            if (img.P[(y * img.W + x) * 4 + 3] > 16) n++;
+        return n;
+    }
+
+    /// <summary>统计指定列中 alpha &gt; 16 的像素数。</summary>
+    public static int ColCount(RebleedImage img, int x)
+    {
+        if (x < 0 || x >= img.W) return -1;
+        int n = 0;
+        for (int y = 0; y < img.H; y++)
+            if (img.P[(y * img.W + x) * 4 + 3] > 16) n++;
+        return n;
+    }
+}
